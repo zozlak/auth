@@ -1,0 +1,24 @@
+{
+    "name": "zozlak/auth",
+    "type": "library",
+    "description": "Very simple yet flexible authentication framework",
+    "keywords": ["authentication"],
+    "homepage": "https://github.com/zozlak/auth",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mateusz Żółtak",
+            "email": "zozlak@zozlak.org",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "zozlak\\auth\\": "src/zozlak/auth/"
+        }
+    }
+}

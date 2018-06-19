@@ -1,0 +1,5 @@
+*.sqlite
+/composer.lock
+/nbproject
+/vendor
+/index.php

@@ -38,14 +38,14 @@ use zozlak\auth\usersDb\UsersDbInterface;
  *
  * Despite prividing access_token-based authentication helps to obtain a
  * token by redirecting to the proper Google API endpoint and is able to refresh
- * expired ones (if they were issued in the 'offline' access type).
+ * expired ones (if they were issued using the 'offline' access type).
  * 
- * Data provided by the getUserData() are basically all the data returned for 
- * the provided token by the https://www.googleapis.com/oauth2/v3/tokeninfo
- * Google API endpoint.
+ * Data provided by the getUserData() are all the data returned for the provided 
+ * token by the https://www.googleapis.com/oauth2/v3/tokeninfo Google API 
+ * endpoint.
  * 
- * You can control amount of data included in tokens generated with the help of
- * this class using the $scope parameter passed to the constructor.
+ * You can control amount of data included in tokens generated using this class
+ * with the $scope parameter passed to the constructor.
  * 
  * @author zozlak
  */

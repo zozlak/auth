@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * The MIT License
  *
  * Copyright 2018 zozlak.
@@ -42,6 +42,15 @@ class TrustedHeader implements AuthMethodInterface {
     private $user;
     private $data;
 
+    /**
+     * Sets up the authentication provider.
+     * 
+     * @param string $userHeader HTTP header storing user login (e.g. HTTP_EPPN)
+     * @param string $headersPrefix name prefix of HTTP headers storing user
+     *   data (e.g. HTTP_SHIB_)
+     * @param array $headersList explicit list of HTTP header names storing user
+     *   data
+     */
     public function __construct(string $userHeader,
                                 string $headersPrefix = null,
                                 array $headersList = []) {
@@ -53,7 +62,7 @@ class TrustedHeader implements AuthMethodInterface {
 
     public function authenticate(UsersDbInterface $db): bool {
         $user = filter_input(\INPUT_SERVER, $this->userHeader);
-        if ($user === null) {
+        if ($user === null || $user === '(null)') {
             return false;
         }
         $this->user = $user;
@@ -68,7 +77,7 @@ class TrustedHeader implements AuthMethodInterface {
             }
         }
         $this->data = (object) $data;
-        
+
         return true;
     }
 

@@ -1,4 +1,4 @@
-# Auth
+    # Auth
 
 A simple yet flexible library for authenticating against different providers.
 
@@ -51,8 +51,10 @@ auxiliary requests to be made, e.g.:
 * Obtaining access token with OAuth2-based providers (e.g. Google) require
   redirection to external services.
 
-Issuing such auxiliary requests would stop resolution of other auth providers in
-the chain and evaluation of other methods in the chain would stop full 
-resolution of above-mentioned auth providers.
+Sending such auxiliary requests would stop resolution of other auth providers in 
+the chain. On the other evaluation of other methods in the chain would stop full 
+resolution of above-mentioned auth providers. Therefore they exclude each other.
 
+### Using with REST services
 
+In most cases it doesn't make sense 

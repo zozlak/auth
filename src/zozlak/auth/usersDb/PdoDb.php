@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * The MIT License
  *
  * Copyright 2018 zozlak.
@@ -42,25 +42,34 @@ use stdClass;
 class PdoDb implements UsersDbInterface {
 
     private $pdo;
+    private $tableName;
+    private $userCol;
+    private $dataCol;
 
-    public function __construct(string $connString) {
+    public function __construct(string $connString, string $tableName = 'users',
+                                string $userCol = 'user',
+                                string $dataCol = 'data') {
+        $this->tableName = $tableName;
+        $this->userCol   = $userCol;
+        $this->dataCol   = $dataCol;
+
         $this->pdo = new PDO($connString);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
-            $this->pdo->query("SELECT 1 FROM users");
+            $this->pdo->query("SELECT 1 FROM $this->tableName");
         } catch (PDOException $ex) {
-            $this->pdo->query("CREATE TABLE users(user text primary key, data text)");
+            $this->pdo->query("CREATE TABLE $this->tableName($this->userCol text primary key, $this->dataCol text)");
         }
     }
 
     public function deleteUser(string $user): bool {
-        $query = $this->pdo->prepare("DELETE FROM users WHERE user = ?");
+        $query = $this->pdo->prepare("DELETE FROM $this->tableName WHERE $this->userCol = ?");
         $query->execute([$user]);
         return $query->rowCount() === 1;
     }
 
     public function getUser(string $user): stdClass {
-        $query = $this->pdo->prepare("SELECT data FROM users WHERE user = ?");
+        $query = $this->pdo->prepare("SELECT $this->dataCol FROM $this->tableName WHERE $this->userCol = ?");
         $query->execute([$user]);
         $data  = $query->fetchColumn();
         if ($data === false) {
@@ -84,10 +93,10 @@ class PdoDb implements UsersDbInterface {
         }
 
         if ($update) {
-            $query = $this->pdo->prepare("UPDATE users SET data = ? WHERE user = ?");
+            $query = $this->pdo->prepare("UPDATE $this->tableName SET $this->dataCol = ? WHERE $this->userCol = ?");
             $query->execute([json_encode($data), $user]);
         } else {
-            $query = $this->pdo->prepare("INSERT INTO users (user, data) VALUES (?, ?)");
+            $query = $this->pdo->prepare("INSERT INTO $this->tableName ($this->userCol, $this->dataCol) VALUES (?, ?)");
             $query->execute([$user, json_encode($data)]);
         }
 

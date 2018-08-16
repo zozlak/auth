@@ -94,7 +94,7 @@ class AuthController {
 
     public function getUserName() {
         if ($this->valid < 0) {
-            throw new RuntimeException('Unauthorized', 401);
+            throw new UnauthorizedException('Unauthorized', 401);
         }
         return $this->authChain[$this->valid]->getUserName();
     }

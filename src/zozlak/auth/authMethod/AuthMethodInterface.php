@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * The MIT License
  *
  * Copyright 2018 zozlak.
@@ -40,4 +40,6 @@ interface AuthMethodInterface {
     public function getUserName(): string;
 
     public function getUserData(): stdClass;
+
+    public function advertise(bool $onFailure): bool;
 }

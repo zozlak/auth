@@ -26,6 +26,8 @@
 
 namespace zozlak\auth\authMethod;
 
+use BadMethodCallException;
+use RuntimeException;
 use stdClass;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -122,7 +124,7 @@ class Google implements AuthMethodInterface {
         $this->client        = new Client();
         $this->usernameField = $usernameField;
 
-        if (file_exists($appConfig)) {
+        if (is_string($appConfig) && file_exists($appConfig)) {
             $this->appConfig = json_decode(file_get_contents($appConfig))->web;
         } else {
             $this->appConfig = (object) $appConfig;
@@ -134,6 +136,9 @@ class Google implements AuthMethodInterface {
             $this->authConfig['response_type'] = 'code';
             $this->authConfig['client_id']     = $this->appConfig->client_id;
             if (strlen($this->authConfig['redirect_uri']) === 0) {
+                if (!isset($this->appConfig->redirect_uris) || !is_array($this->appConfig->redirect_uris) || count($this->appConfig->redirect_uris) === 0) {
+                    throw new BadMethodCallException('redirect URI not specified');
+                }
                 $this->authConfig['redirect_uri'] = $this->appConfig->redirect_uris[0];
             }
             $this->authConfig['include_granted_scopes'] = $this->authConfig['include_granted_scopes'] ? 'true' : 'false';
@@ -153,9 +158,6 @@ class Google implements AuthMethodInterface {
             $this->fetchData($db);
             return true;
         } catch (GuzzleException $ex) {
-            if ($this->authConfig) {
-                header('Location: ' . $this->getAuthUrl());
-            }
             return false;
         }
     }
@@ -167,6 +169,17 @@ class Google implements AuthMethodInterface {
     public function getUserName(): string {
         $field = $this->usernameField;
         return $this->data->$field;
+    }
+
+    public function advertise(bool $onFailure): bool {
+        if (!$this->authConfig) {
+            throw new RuntimeException('Authorization config missing');
+        }
+        if (!$this->data->access_token || $onFailure) {
+            header('Location: ' . $this->getAuthUrl());
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -192,7 +205,7 @@ class Google implements AuthMethodInterface {
      */
     private function fetchData(UsersDbInterface $db) {
         if (!$this->data->access_token) {
-            throw new RequestException('No refresh token', new Request('GET', 'http://127.0.0.1'));
+            throw new RequestException('No access token', new Request('GET', 'http://127.0.0.1'));
         }
         $url        = self::TOKENINFO_URL . '?access_token=' . urlencode($this->data->access_token);
         $req        = new Request('GET', $url, self::CONTENT_TYPE);

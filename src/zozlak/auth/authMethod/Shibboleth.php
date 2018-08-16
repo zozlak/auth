@@ -71,11 +71,7 @@ class Shibboleth extends TrustedHeader {
     }
 
     public function authenticate(UsersDbInterface $db): bool {
-        $result = parent::authenticate($db);
-        if (!$result) {
-            header('Location: ' . $this->authUrl);
-        }
-        return $result;
+        return parent::authenticate($db);
     }
 
     /**
@@ -99,6 +95,20 @@ class Shibboleth extends TrustedHeader {
         $host  = ($xhost ?? $host) ?? $sn;
 
         return $protocol . '://' . $host . $port . $s['REQUEST_URI'];
+    }
+
+    public function advertise(bool $onFailure): bool {
+        $cookie = false;
+        foreach (array_keys($_COOKIE) as $i) {
+            if (substr($i, 0, 13) === '_shibsession_') {
+                $cookie = true;
+                break;
+            }
+        }
+        if (!$cookie || $onFailure) {
+            header('Location: ' . $this->authUrl);
+            return true;
+        }return false;
     }
 
 }

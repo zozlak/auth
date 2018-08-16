@@ -42,20 +42,15 @@ class HttpBasic implements AuthMethodInterface {
     }
 
     private $realm;
-    private $adv;
     private $user;
 
-    public function __construct(string $realm, bool $advertise = true) {
+    public function __construct(string $realm) {
         $this->realm = $realm;
-        $this->adv = $advertise;
     }
     
     public function authenticate(UsersDbInterface $db): bool {
         $user = $_SERVER['PHP_AUTH_USER'] ?? null;
         if ($user === null) {
-            if ($this->adv) {
-                $this->advertise();
-            }
             return false;
         }
         try {
@@ -72,8 +67,12 @@ class HttpBasic implements AuthMethodInterface {
         }
     }
 
-    public function advertise() {
-        header('WWW-Authenticate: Basic realm="' . $this->realm . '"');
+    public function advertise(bool $onFailure): bool {
+        if (!isset($_SERVER['PHP_AUTH_USER']) || $onFailure) {
+            header('WWW-Authenticate: Basic realm="' . $this->realm . '"');
+            return true;
+        }
+        return false;
     }
     
     public function getUserData(): stdClass {

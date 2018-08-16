@@ -8,6 +8,7 @@
 
 namespace zozlak\auth\authMethod;
 
+use BadMethodCallException;
 use stdClass;
 use zozlak\auth\usersDb\UsersDbInterface;
 
@@ -36,6 +37,10 @@ class Guest implements AuthMethodInterface {
 
     public function getUserName(): string {
         return $this->user;
+    }
+
+    public function advertise(bool $onFailure): bool {
+        throw new BadMethodCallException('advertising not supported');
     }
 
 }

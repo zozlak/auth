@@ -26,6 +26,7 @@
 
 namespace zozlak\auth\authMethod;
 
+use BadMethodCallException;
 use stdClass;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
@@ -61,7 +62,7 @@ class GoogleToken implements AuthMethodInterface {
      *   to be used as a user name, e.g. 'email' or 'userId'
      */
     public function __construct(string $token, string $usernameField = 'email') {
-        $this->token = $token;
+        $this->token         = $token;
         $this->usernameField = $usernameField;
     }
 
@@ -69,15 +70,15 @@ class GoogleToken implements AuthMethodInterface {
         $client = new Client();
         $req    = new Request('GET', self::API_URL . '?access_token=' . $this->token);
         try {
-            $resp   = $client->send($req);
-            $data = json_decode($resp->getBody());
+            $resp  = $client->send($req);
+            $data  = json_decode($resp->getBody());
             $field = $this->usernameField;
             if ($data === null || isset($data->err) || !isset($data->$field)) {
                 return false;
             }
             $this->data = $data;
             return true;
-        } catch (RequestException $ex){
+        } catch (RequestException $ex) {
             return false;
         }
     }
@@ -89,6 +90,10 @@ class GoogleToken implements AuthMethodInterface {
     public function getUserName(): string {
         $field = $this->usernameField;
         return $this->data->$field;
+    }
+
+    public function advertise(bool $onFailure): bool {
+        throw new BadMethodCallException('advertising not supported');
     }
 
 }

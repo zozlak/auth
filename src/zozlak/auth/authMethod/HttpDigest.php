@@ -55,7 +55,6 @@ class HttpDigest implements AuthMethodInterface {
     public function authenticate(UsersDbInterface $db): bool {
         $reqData = $this->getRequestData();
         if (!$reqData) {
-            $this->advertise();
             return false;
         }
         try {
@@ -84,8 +83,12 @@ class HttpDigest implements AuthMethodInterface {
         return $this->user;
     }
 
-    public function advertise() {
-        header('WWW-Authenticate: Digest realm="' . $this->realm . '",qop="auth",nonce="' . uniqid() . '",opaque="' . md5($this->realm) . '"');
+    public function advertise(bool $onFailure): bool {
+        if (!$this->getRequestData() || $onFailure) {
+            header('WWW-Authenticate: Digest realm="' . $this->realm . '",qop="auth",nonce="' . uniqid() . '",opaque="' . md5($this->realm) . '"');
+            return true;
+        }
+        return false;
     }
 
     private function getRequestData() {

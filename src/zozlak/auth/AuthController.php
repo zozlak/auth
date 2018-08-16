@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * The MIT License
  *
  * Copyright 2018 zozlak.
@@ -26,6 +26,7 @@
 
 namespace zozlak\auth;
 
+use BadMethodCallException;
 use RuntimeException;
 use stdClass;
 use zozlak\auth\authMethod\AuthMethodInterface;
@@ -38,9 +39,14 @@ use zozlak\auth\usersDb\UsersDbInterface;
  * @author zozlak
  */
 class AuthController {
-    
-    private $authChain = [];
-    private $valid = -1;
+
+    const ADVERTISE_NONE   = 1;
+    const ADVERTISE_ONCE   = 2;
+    const ADVERTISE_ALWAYS = 3;
+
+    private $authChain     = [];
+    private $authAdvertise = [];
+    private $valid         = -1;
     private $usersDb;
 
     /**
@@ -52,8 +58,12 @@ class AuthController {
         $this->usersDb = $db;
     }
 
-    public function addMethod(AuthMethodInterface $method): AuthController {
-        $this->authChain[] = $method;
+    public function addMethod(AuthMethodInterface $method, int $advertise = self::ADVERTISE_NONE): AuthController {
+        if (!in_array($advertise, [self::ADVERTISE_NONE, self::ADVERTISE_ONCE, self::ADVERTISE_ALWAYS])) {
+            throw new BadMethodCallException('advertise parameter must be one of ADVERTISE_NONE, ADVERTISE_ONCE and ADVERTISE_ALWAYS');
+        }
+        $this->authChain[]     = $method;
+        $this->authAdvertise[] = $advertise;
         return $this;
     }
 
@@ -69,7 +79,19 @@ class AuthController {
         }
         return false;
     }
-    
+
+    public function advertise(): bool {
+        foreach ($this->authChain as $i => $authMethod) {
+            if ($this->authAdvertise[$i] >= self::ADVERTISE_ONCE) {
+                $adv = $authMethod->advertise($this->authAdvertise[$i] === self::ADVERTISE_ALWAYS);
+                if ($adv) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public function getUserName() {
         if ($this->valid < 0) {
             throw new RuntimeException('Unauthorized', 401);

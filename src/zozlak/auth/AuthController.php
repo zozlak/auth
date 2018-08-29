@@ -27,7 +27,6 @@
 namespace zozlak\auth;
 
 use BadMethodCallException;
-use RuntimeException;
 use stdClass;
 use zozlak\auth\authMethod\AuthMethodInterface;
 use zozlak\auth\usersDb\UsersDbInterface;

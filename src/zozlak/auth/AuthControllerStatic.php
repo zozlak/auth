@@ -47,8 +47,9 @@ class AuthControllerStatic {
         self::$auth = new AuthController($db);
     }
 
-    static public function addMethod(AuthMethodInterface $method) {
-        self::$auth->addMethod($method);
+    static public function addMethod(AuthMethodInterface $method,
+                                     int $advertise = self::ADVERTISE_NONE): AuthController {
+        return self::$auth->addMethod($method, $advertise);
     }
 
     static public function authenticate(): bool {

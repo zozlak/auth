@@ -41,27 +41,21 @@ use zozlak\auth\usersDb\UserUnknownException;
  */
 class Token implements AuthMethodInterface {
 
-    static public function createToken(UsersDbInterface $db, string $user,
+    static public function createToken(stdClass $data, string $user,
                                        int $expirationTime = 600): string {
 
         $token = '';
         for ($i = 0; $i < 32; $i++) {
             $token .= chr(random_int(32, 126));
         }
-        $token = $user . ':' . password_hash($token, PASSWORD_DEFAULT);
-        $token = [
+        $token        = $user . ':' . password_hash($token, PASSWORD_DEFAULT);
+        $token        = [
             'token'   => $token,
             'expires' => time() + $expirationTime
         ];
-        try {
-            $data         = $db->getUser($user);
-            $tokens       = $data->tokens ?? [];
-            $tokens[]     = $token;
-            $data->tokens = $tokens;
-            $db->putUser($user, $data, false);
-        } catch (UserUnknownException $ex) {
-            $db->putUser($user, (object) ['tokens' => [$token]]);
-        }
+        $tokens       = $data->tokens ?? [];
+        $tokens[]     = $token;
+        $data->tokens = $tokens;
         return $token['token'];
     }
 

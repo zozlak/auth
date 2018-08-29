@@ -55,6 +55,10 @@ class AuthControllerStatic {
         return self::$auth->authenticate();
     }
 
+    static public function advertise(): bool {
+        return self::$auth->advertise();
+    }
+
     static public function getUserName() {
         return self::$auth->getUserName();
     }

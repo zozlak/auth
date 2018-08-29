@@ -48,7 +48,7 @@ class AuthControllerStatic {
     }
 
     static public function addMethod(AuthMethodInterface $method,
-                                     int $advertise = self::ADVERTISE_NONE): AuthController {
+                                     int $advertise = AuthController::ADVERTISE_NONE): AuthController {
         return self::$auth->addMethod($method, $advertise);
     }
 

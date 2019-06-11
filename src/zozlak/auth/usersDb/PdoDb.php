@@ -75,7 +75,7 @@ class PdoDb implements UsersDbInterface {
         if ($data === false) {
             throw new UserUnknownException();
         }
-        return json_decode($data);
+        return json_decode($data) ?? new stdClass();
     }
 
     public function putUser(string $user, stdClass $data = null,

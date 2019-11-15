@@ -76,12 +76,12 @@ Chaining many authentication methods is easy until it's only checking credential
 a client in his request. 
 
 The problem starts when request contains no (valid) credentials and we want to explicitely ask user 
-to include them. The problem is generally **we can advertise only one auth method at once** because 
+to include them. The problem is in most cases **we can advertise only one auth method at once**. This is because 
 different auth methods use conflicting advertisment mechanism, e.g.
 
-* all OAuth2 (Google, etc.) and SAML (Shibboleth) methods use `Location` header to redirect user
-  to the login page and we can't return many redirects to different locations in one response
-* presence of HTTP Basic or HTTP Digest auth headers in a response force all GUI clients to prompt
+* all OAuth2 (Google, etc.) and SAML (Shibboleth) methods use a `Location` header to redirect user
+  to a login page and we can't return many redirects to different locations in one response
+* presence of an HTTP Basic or HTTP Digest auth header in a response forces all GUI clients to prompt
   user for login and password and skip the rest of a response
 
 Control over advertising auth methods is provided in the following way:
@@ -92,11 +92,11 @@ Control over advertising auth methods is provided in the following way:
       credentials for this method (and if a request contained wrong credentials for this method,
       the method is not advertised again)
     * `AuthMethod::ADVERTISE_ALWAYS` auth method is always advertised
-* When you call `AutController::advertise()` function a first auth method in the chain which 
+* When you call the `AutController::advertise()` method a first auth method in the chain which 
   fulfills its advertisment conditions is advertised.
 
 You assigne the *advertisment level* when adding it to the auth chain using the second parameter 
-of the `AutController::addMethod(AuthMethodInterface $method, int $advertise)` function.
+of the `AutController::addMethod(AuthMethodInterface $method, int $advertise)` method.
 **By default it's `AuthMethod::ADVERTISE_NONE`**
 
 Remember `Guest`, `GoogleToken` and `TrustedHeaders` don't support advertisment.
@@ -104,15 +104,14 @@ Remember `Guest`, `GoogleToken` and `TrustedHeaders` don't support advertisment.
 ### HTTP Digest method
 
 HTTP Digest is difficult to combine with any other auth method. Unlike any other method HTTP Digest
-has to be advertised to the c;oemt so he can prepare valid credentials. And once it is advertised
-all GUI clients (most notably web browsers) will keep asking user for login and password until he
-provides valid once making it impossible to use any other authentication method.
+has to be advertised to the client before his request so he can prepare valid credentials. And once it is advertised
+all GUI clients (most notably web browsers) will keep asking user for a login and password until valid once are provided making it impossible to use any other authentication method.
 
 (Poor) workarounds for this problem are:
 
-* Putting HTTP Digest at the end of the auth chain allowing any other auth method to be checked first
-* Setting up HTTP Digest provider's advertise setting to `ADVERTISE_ONCE`. Then it will be advertised
-  only when a client didn't provide HTTP Digest credentials in his request and if credentials were
-  provided (no matter if they are good or wrong) the HTTP Digest method wont be advertised again.
-  It allows to resolve auth providers staing after HTTP Digest in the auth chain at the cost of
-  giving user only one chance to input correct login and password.
+* Putting HTTP Digest at the end of the auth chain allowing any other auth method to be checked first.
+* Setting up HTTP Digest provider's advertise setting to `ADVERTISE_ONCE`. In such a case it will be advertised
+  only when a client doesn't provide HTTP Digest credentials in his request and if credentials are
+  provided (no matter if they are good or wrong) the HTTP Digest method won't be advertised again.
+  It allows to resolve auth providers staying after the HTTP Digest in the auth chain at the cost of
+  giving user only one chance to input a correct login and password.

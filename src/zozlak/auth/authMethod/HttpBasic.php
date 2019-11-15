@@ -47,15 +47,22 @@ class HttpBasic implements AuthMethodInterface {
     public function __construct(string $realm) {
         $this->realm = $realm;
     }
-    
+
     public function authenticate(UsersDbInterface $db): bool {
-        $user = $_SERVER['PHP_AUTH_USER'] ?? null;
+        $user    = $pswd    = null;
+        $reqData = $_SERVER['AUTHORIZATION'] ?? '';
+        if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
+            $reqData = base64_decode(trim(substr($reqData, 6)));
+            $delpos  = strpos($reqData, ':');
+            $user    = substr($reqData, 0, $delpos);
+            $pswd    = substr($reqData, $delpos + 1);
+        }
+
         if ($user === null) {
             return false;
         }
         try {
             $data = $db->getUser($user ?? '');
-            $pswd = $_SERVER['PHP_AUTH_PW'] ?? '';
             $hash = $data->pswd ?? '';
             if (password_verify($pswd, $hash)) {
                 $this->user = $user;
@@ -74,7 +81,7 @@ class HttpBasic implements AuthMethodInterface {
         }
         return false;
     }
-    
+
     public function getUserData(): stdClass {
         return new stdClass();
     }

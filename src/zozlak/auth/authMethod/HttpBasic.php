@@ -49,13 +49,18 @@ class HttpBasic implements AuthMethodInterface {
     }
 
     public function authenticate(UsersDbInterface $db): bool {
-        $user    = $pswd    = null;
-        $reqData = $_SERVER['AUTHORIZATION'] ?? '';
-        if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
-            $reqData = base64_decode(trim(substr($reqData, 6)));
-            $delpos  = strpos($reqData, ':');
-            $user    = substr($reqData, 0, $delpos);
-            $pswd    = substr($reqData, $delpos + 1);
+        $user = $pswd = null;
+        if (!empty($_SERVER['PHP_AUTH_PW']) && !empty($_SERVER['PHP_AUTH_USER'])) {
+            $user = $_SERVER['PHP_AUTH_USER'];
+            $pswd = $_SERVER['PHP_AUTH_PW'];
+        } else {
+            $reqData = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['AUTHORIZATION'] ?? '');
+            if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
+                $reqData = base64_decode(trim(substr($reqData, 6)));
+                $delpos  = strpos($reqData, ':');
+                $user    = substr($reqData, 0, $delpos);
+                $pswd    = substr($reqData, $delpos + 1);
+            }
         }
 
         if ($user === null) {
@@ -75,7 +80,7 @@ class HttpBasic implements AuthMethodInterface {
     }
 
     public function advertise(bool $onFailure): bool {
-        if (!isset($_SERVER['PHP_AUTH_USER']) || $onFailure) {
+        if (!isset($_SERVER['PHP_AUTH_USER']) && !isset($_SERVER['HTTP_AUTHORIZATION']) && !isset($_SERVER['AUTHORIZATION']) || $onFailure) {
             header('WWW-Authenticate: Basic realm="' . $this->realm . '"');
             return true;
         }

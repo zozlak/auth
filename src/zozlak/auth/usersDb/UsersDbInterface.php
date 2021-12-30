@@ -36,8 +36,8 @@ interface UsersDbInterface {
 
     public function getUser(string $user): stdClass;
 
-    public function deleteUser(string $user);
+    public function deleteUser(string $user): bool;
 
-    public function putUser(string $user, stdClass $data = null,
-                            bool $merge = true);
+    public function putUser(string $user, object $data = null,
+                            bool $merge = true): bool;
 }

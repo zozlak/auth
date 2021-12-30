@@ -41,10 +41,10 @@ use stdClass;
  */
 class PdoDb implements UsersDbInterface {
 
-    private $pdo;
-    private $tableName;
-    private $userCol;
-    private $dataCol;
+    private PDO $pdo;
+    private string $tableName;
+    private string $userCol;
+    private string $dataCol;
 
     public function __construct(string $connString, string $tableName = 'users',
                                 string $userCol = 'user',
@@ -75,10 +75,10 @@ class PdoDb implements UsersDbInterface {
         if ($data === false) {
             throw new UserUnknownException();
         }
-        return json_decode($data) ?? new stdClass();
+        return json_decode((string) $data) ?? new stdClass();
     }
 
-    public function putUser(string $user, stdClass $data = null,
+    public function putUser(string $user, object $data = null,
                             bool $merge = true): bool {
         $data = $data ?? new stdClass();
 

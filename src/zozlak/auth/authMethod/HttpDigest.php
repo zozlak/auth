@@ -37,16 +37,16 @@ use zozlak\auth\usersDb\UserUnknownException;
  */
 class HttpDigest implements AuthMethodInterface {
 
-    static private function getHa1(string $realm, string $user, string $pswd) {
+    static private function getHa1(string $realm, string $user, string $pswd): string {
         return md5($user . ':' . $realm . ':' . $pswd);
     }
 
-    static public function pswdData(string $realm, string $user, string $pswd): stdClass {
+    static public function pswdData(string $realm, string $user, string $pswd): object {
         return (object) ['ha1' => self::getHa1($realm, $user, $pswd)];
     }
 
-    private $realm;
-    private $user;
+    private string $realm;
+    private string $user;
 
     public function __construct(string $realm) {
         $this->realm = $realm;
@@ -54,7 +54,7 @@ class HttpDigest implements AuthMethodInterface {
 
     public function authenticate(UsersDbInterface $db): bool {
         $reqData = $this->getRequestData();
-        if (!$reqData) {
+        if ($reqData === null) {
             return false;
         }
         try {
@@ -75,7 +75,7 @@ class HttpDigest implements AuthMethodInterface {
         }
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return new stdClass();
     }
 
@@ -84,14 +84,18 @@ class HttpDigest implements AuthMethodInterface {
     }
 
     public function advertise(bool $onFailure): bool {
-        if (!$this->getRequestData() || $onFailure) {
+        if ($this->getRequestData() === null || $onFailure) {
             header('WWW-Authenticate: Digest realm="' . $this->realm . '",qop="auth",nonce="' . uniqid() . '",opaque="' . md5($this->realm) . '"');
             return true;
         }
         return false;
     }
 
-    private function getRequestData() {
+    /**
+     * 
+     * @return array<mixed>|null
+     */
+    private function getRequestData(): ?array {
 
         $parts = [
             'nonce'    => 1,
@@ -114,7 +118,6 @@ class HttpDigest implements AuthMethodInterface {
             unset($parts[$m[1]]);
         }
 
-        return count($parts) > 0 ? false : $data;
+        return count($parts) > 0 ? null : $data;
     }
-
 }

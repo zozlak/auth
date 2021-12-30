@@ -87,20 +87,20 @@ class Google implements AuthMethodInterface {
         'refresh_time'           => 600,
     ];
 
-    /**
-     *
-     * @var GuzzleHttp\Client
-     */
-    private $client;
+    private Client $client;
 
     /**
      * Stores all Google Sign-In API related config
      * @var stdClass
      */
     private $appConfig;
-    private $authConfig;
-    private $usernameField;
-    private $data;
+    /**
+     * 
+     * @var array<mixed>
+     */
+    private array $authConfig;
+    private string $usernameField;
+    private object $data;
 
     /**
      * Sets up the authentication provider.
@@ -111,7 +111,7 @@ class Google implements AuthMethodInterface {
      *   https://console.developers.google.com/apis/credentials (as array, 
      *   object or JSON file path; if array or object, must contain 'client_id' 
      *   and 'client_secret')
-     * @param array $authConfig configuration of an authorization request made
+     * @param array<mixed> $authConfig configuration of an authorization request made
      *   when token is invalid or missing - see the AUTH_CONFIG constant;
      *   if NULL, no redirection to the Google auth service is made when 
      *   a token is missing or invalid
@@ -125,7 +125,7 @@ class Google implements AuthMethodInterface {
         $this->usernameField = $usernameField;
 
         if (is_string($appConfig) && file_exists($appConfig)) {
-            $this->appConfig = json_decode(file_get_contents($appConfig))->web;
+            $this->appConfig = json_decode((string) file_get_contents($appConfig))->web;
         } else {
             $this->appConfig = (object) $appConfig;
         }
@@ -162,7 +162,7 @@ class Google implements AuthMethodInterface {
         }
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->data;
     }
 
@@ -187,7 +187,7 @@ class Google implements AuthMethodInterface {
      * 
      * @param string $code
      */
-    private function fetchTokenFromCode(string $code) {
+    private function fetchTokenFromCode(string $code): void {
         $body       = $this->array2wwwform([
             'code'          => $code,
             'client_id'     => $this->appConfig->client_id,
@@ -203,7 +203,7 @@ class Google implements AuthMethodInterface {
     /**
      * https://developers.google.com/apis-explorer/#p/oauth2/v2/oauth2.tokeninfo
      */
-    private function fetchData(UsersDbInterface $db) {
+    private function fetchData(UsersDbInterface $db): void {
         if (!$this->data->access_token) {
             throw new RequestException('No access token', new Request('GET', 'http://127.0.0.1'));
         }
@@ -261,6 +261,11 @@ class Google implements AuthMethodInterface {
         return $url;
     }
 
+    /**
+     * 
+     * @param array<string, mixed> $a
+     * @return string
+     */
     private function array2wwwform(array $a): string {
         $data = '';
         $glue = '';

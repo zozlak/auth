@@ -59,14 +59,14 @@ class Token implements AuthMethodInterface {
         return $token['token'];
     }
 
-    private $data;
-    private $token;
-    private $expTime;
+    private object $data;
+    private string $token;
+    private int $expTime;
 
     /**
      * 
      * @param string $token access token
-     * @param string $expirationTime for how many seconds token should be 
+     * @param int $expirationTime for how many seconds token should be 
      *   extended when matched
      */
     public function __construct(string $token, int $expirationTime = 600) {
@@ -103,7 +103,7 @@ class Token implements AuthMethodInterface {
         return $passed;
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->data;
     }
 
@@ -115,5 +115,4 @@ class Token implements AuthMethodInterface {
     public function advertise(bool $onFailure): bool {
         throw new BadMethodCallException('advertising not supported');
     }
-
 }

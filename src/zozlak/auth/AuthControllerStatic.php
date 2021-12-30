@@ -43,7 +43,7 @@ class AuthControllerStatic {
      */
     static private $auth;
 
-    static public function init(UsersDbInterface $db) {
+    static public function init(UsersDbInterface $db): void {
         self::$auth = new AuthController($db);
     }
 
@@ -60,15 +60,15 @@ class AuthControllerStatic {
         return self::$auth->advertise();
     }
 
-    static public function getUserName() {
+    static public function getUserName(): string {
         return self::$auth->getUserName();
     }
 
-    static public function getUserData(): stdClass {
+    static public function getUserData(): object {
         return self::$auth->getUserData();
     }
 
-    static public function putUserData(stdClass $data, bool $merge = true) {
+    static public function putUserData(stdClass $data, bool $merge = true): bool {
         return self::$auth->putUserData($data, $merge);
     }
 

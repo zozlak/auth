@@ -19,8 +19,8 @@ use zozlak\auth\usersDb\UsersDbInterface;
  */
 class Guest implements AuthMethodInterface {
 
-    private $user;
-    private $data;
+    private string $user;
+    private object $data;
 
     public function __construct(string $user, stdClass $data = null) {
         $this->user = $user;
@@ -31,7 +31,7 @@ class Guest implements AuthMethodInterface {
         return true;
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->data;
     }
 

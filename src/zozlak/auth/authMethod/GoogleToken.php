@@ -50,9 +50,9 @@ class GoogleToken implements AuthMethodInterface {
 
     const API_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo';
 
-    private $token;
-    private $usernameField;
-    private $data;
+    private string $token;
+    private string $usernameField;
+    private object $data;
 
     /**
      * 
@@ -83,7 +83,7 @@ class GoogleToken implements AuthMethodInterface {
         }
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->data;
     }
 

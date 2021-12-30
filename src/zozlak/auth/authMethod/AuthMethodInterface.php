@@ -26,7 +26,6 @@
 
 namespace zozlak\auth\authMethod;
 
-use stdClass;
 use zozlak\auth\usersDb\UsersDbInterface;
 
 /**
@@ -39,7 +38,7 @@ interface AuthMethodInterface {
 
     public function getUserName(): string;
 
-    public function getUserData(): stdClass;
+    public function getUserData(): object;
 
     public function advertise(bool $onFailure): bool;
 }

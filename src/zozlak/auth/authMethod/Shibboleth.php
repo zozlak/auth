@@ -40,7 +40,7 @@ use zozlak\auth\usersDb\UsersDbInterface;
  */
 class Shibboleth extends TrustedHeader {
 
-    private $authUrl;
+    private string $authUrl;
 
     /**
      * Sets up the authentication provider.
@@ -48,7 +48,7 @@ class Shibboleth extends TrustedHeader {
      * @param string $userHeader HTTP header storing user login (e.g. HTTP_EPPN)
      * @param string $headersPrefix name prefix of HTTP headers storing user
      *   data (e.g. HTTP_SHIB_)
-     * @param array $headersList explicit list of HTTP header names storing user
+     * @param array<string> $headersList explicit list of HTTP header names storing user
      *   data
      * @param string $authUrl Shibboleth login endpoint URL (typically 
      *   https://domain/Shibboleth.sso/Login)
@@ -57,9 +57,8 @@ class Shibboleth extends TrustedHeader {
      * @param string $entityId optional Service Provider's entity ID (if not
      *   specified Shibboleth's login endpoint default will be used)
      */
-    public function __construct(string $userHeader,
-                                string $headersPrefix = null,
-                                array $headersList = [], string $authUrl,
+    public function __construct(string $userHeader, string $headersPrefix,
+                                array $headersList, string $authUrl,
                                 string $target = null, string $entityId = null) {
         parent::__construct($userHeader, $headersPrefix, $headersList);
 
@@ -84,17 +83,17 @@ class Shibboleth extends TrustedHeader {
     private function getRequestUrl(): string {
         $ssl      = filter_input(\INPUT_SERVER, 'HTTPS') === 'on';
         $sp       = strtolower(filter_input(\INPUT_SERVER, 'SERVER_PROTOCOL'));
-        $protocol = substr($sp, 0, strpos($sp, '/')) . (($ssl) ? 's' : '' );
+        $protocol = substr($sp, 0, (int) strpos($sp, '/')) . (($ssl) ? 's' : '' );
 
         $port = filter_input(\INPUT_SERVER, 'SERVER_PORT');
         $port = ((!$ssl && $port === '80') || ($ssl && $port === '443')) ? '' : ':' . $port;
 
-        $xhost = trim(explode(',', filter_input(\INPUT_SERVER, 'HTTP_X_FORWARDED_HOST'))[0]);
+        $xhost = trim(explode(',', (string) filter_input(\INPUT_SERVER, 'HTTP_X_FORWARDED_HOST'))[0]);
         $host  = filter_input(\INPUT_SERVER, 'HTTP_HOST');
         $sn    = filter_input(\INPUT_SERVER, 'SERVER_NAME');
-        $host  = ($xhost ?? $host) ?? $sn;
+        $host  = (string) (!empty($xhost) ? $xhost : ($host ?? $sn));
 
-        return $protocol . '://' . $host . $port . $s['REQUEST_URI'];
+        return $protocol . '://' . $host . $port . filter_input(\INPUT_SERVER, 'REQUEST_URI');
     }
 
     public function advertise(bool $onFailure): bool {
@@ -110,5 +109,4 @@ class Shibboleth extends TrustedHeader {
             return true;
         }return false;
     }
-
 }

@@ -43,10 +43,18 @@ class AuthController {
     const ADVERTISE_ONCE   = 2;
     const ADVERTISE_ALWAYS = 3;
 
-    private $authChain     = [];
-    private $authAdvertise = [];
-    private $valid         = -1;
-    private $usersDb;
+    /**
+     * 
+     * @var array<AuthMethodInterface>
+     */
+    private array $authChain     = [];
+    /**
+     * 
+     * @var array<int>
+     */
+    private array $authAdvertise = [];
+    private int $valid         = -1;
+    private UsersDbInterface $usersDb;
 
     /**
      * 
@@ -57,7 +65,8 @@ class AuthController {
         $this->usersDb = $db;
     }
 
-    public function addMethod(AuthMethodInterface $method, int $advertise = self::ADVERTISE_NONE): AuthController {
+    public function addMethod(AuthMethodInterface $method,
+                              int $advertise = self::ADVERTISE_NONE): AuthController {
         if (!in_array($advertise, [self::ADVERTISE_NONE, self::ADVERTISE_ONCE, self::ADVERTISE_ALWAYS])) {
             throw new BadMethodCallException('advertise parameter must be one of ADVERTISE_NONE, ADVERTISE_ONCE and ADVERTISE_ALWAYS');
         }
@@ -91,19 +100,18 @@ class AuthController {
         return false;
     }
 
-    public function getUserName() {
+    public function getUserName(): string {
         if ($this->valid < 0) {
             throw new UnauthorizedException('Unauthorized', 401);
         }
         return $this->authChain[$this->valid]->getUserName();
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->usersDb->getUser($this->getUserName());
     }
 
-    public function putUserData(stdClass $data, bool $merge = true) {
+    public function putUserData(object $data, bool $merge = true): bool {
         return $this->usersDb->putUser($this->getUserName(), $data, $merge);
     }
-
 }

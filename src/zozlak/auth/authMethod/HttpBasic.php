@@ -41,8 +41,8 @@ class HttpBasic implements AuthMethodInterface {
         return (object) ['pswd' => password_hash($pswd, PASSWORD_DEFAULT)];
     }
 
-    private $realm;
-    private $user;
+    private string $realm;
+    private string $user;
 
     public function __construct(string $realm) {
         $this->realm = $realm;
@@ -58,7 +58,7 @@ class HttpBasic implements AuthMethodInterface {
             if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
                 $reqData = base64_decode(trim(substr($reqData, 6)));
                 $delpos  = strpos($reqData, ':');
-                $user    = substr($reqData, 0, $delpos);
+                $user    = substr($reqData, 0, (int) $delpos);
                 $pswd    = substr($reqData, $delpos + 1);
             }
         }
@@ -67,7 +67,7 @@ class HttpBasic implements AuthMethodInterface {
             return false;
         }
         try {
-            $data = $db->getUser($user ?? '');
+            $data = $db->getUser($user);
             $hash = $data->pswd ?? '';
             if (password_verify($pswd, $hash)) {
                 $this->user = $user;

@@ -37,11 +37,15 @@ use zozlak\auth\usersDb\UsersDbInterface;
  */
 class TrustedHeader implements AuthMethodInterface {
 
-    private $userHeader;
-    private $headersPrefix;
-    private $headersList;
-    private $user;
-    private $data;
+    private string $userHeader;
+    private string $headersPrefix;
+    /**
+     * 
+     * @var array<string>
+     */
+    private array $headersList;
+    private string $user;
+    private object $data;
 
     /**
      * Sets up the authentication provider.
@@ -49,11 +53,11 @@ class TrustedHeader implements AuthMethodInterface {
      * @param string $userHeader HTTP header storing user login (e.g. HTTP_EPPN)
      * @param string $headersPrefix name prefix of HTTP headers storing user
      *   data (e.g. HTTP_SHIB_)
-     * @param array $headersList explicit list of HTTP header names storing user
+     * @param array<string> $headersList explicit list of HTTP header names storing user
      *   data
      */
     public function __construct(string $userHeader,
-                                string $headersPrefix = null,
+                                string $headersPrefix = '',
                                 array $headersList = []) {
         $this->userHeader    = $userHeader;
         $this->headersPrefix = $headersPrefix;
@@ -82,7 +86,7 @@ class TrustedHeader implements AuthMethodInterface {
         return true;
     }
 
-    public function getUserData(): stdClass {
+    public function getUserData(): object {
         return $this->data;
     }
 

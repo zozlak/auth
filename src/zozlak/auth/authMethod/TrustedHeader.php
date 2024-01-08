@@ -95,7 +95,7 @@ class TrustedHeader implements AuthMethodInterface {
     }
 
     public function advertise(bool $onFailure): bool {
-        throw new BadMethodCallException('advertising not supported');
+        return false;
     }
 
 }

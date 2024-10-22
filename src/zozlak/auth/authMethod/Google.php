@@ -33,7 +33,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use zozlak\auth\usersDb\UsersDbInterface;
+use zozlak\auth\UnauthorizedException;
 
 /**
  * Feature-reach Google access_token-based authentication provider.
@@ -94,6 +96,7 @@ class Google implements AuthMethodInterface {
      * @var stdClass
      */
     private $appConfig;
+
     /**
      * 
      * @var array<mixed>
@@ -145,8 +148,8 @@ class Google implements AuthMethodInterface {
         }
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
-        $code = filter_input(\INPUT_GET, 'code');
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
+        $code = $_GET['code'] ?? null;
         if ($code) {
             try {
                 $this->fetchTokenFromCode($code);
@@ -158,8 +161,12 @@ class Google implements AuthMethodInterface {
             $this->fetchData($db);
             return true;
         } catch (GuzzleException $ex) {
-            return false;
+            
         }
+        if ($strict) {
+            throw new UnauthorizedException();
+        }
+        return false;
     }
 
     public function getUserData(): object {
@@ -171,15 +178,18 @@ class Google implements AuthMethodInterface {
         return $this->data->$field;
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): Response | null {
         if (!$this->authConfig) {
             throw new RuntimeException('Authorization config missing');
         }
         if (!$this->data->access_token || $onFailure) {
-            header('Location: ' . $this->getAuthUrl());
-            return true;
+            return new Response(302, ['Location' => $this->getAuthUrl()]);
         }
-        return false;
+        return null;
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        throw new BadMethodCallException('logout not supported');
     }
 
     /**
@@ -275,5 +285,4 @@ class Google implements AuthMethodInterface {
         }
         return $data;
     }
-
 }

@@ -27,8 +27,10 @@
 namespace zozlak\auth\authMethod;
 
 use stdClass;
+use GuzzleHttp\Psr7\Response;
 use zozlak\auth\usersDb\UsersDbInterface;
 use zozlak\auth\usersDb\UserUnknownException;
+use zozlak\auth\UnauthorizedException;
 
 /**
  * Description of HttpBasic
@@ -48,24 +50,18 @@ class HttpBasic implements AuthMethodInterface {
         $this->realm = $realm;
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
-        $user = $pswd = null;
-        if (!empty($_SERVER['PHP_AUTH_PW']) && !empty($_SERVER['PHP_AUTH_USER'])) {
-            $user = $_SERVER['PHP_AUTH_USER'];
-            $pswd = $_SERVER['PHP_AUTH_PW'];
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
+        $user    = $pswd    = null;
+        $reqData = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['AUTHORIZATION'] ?? '');
+        if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
+            $reqData = base64_decode(trim(substr($reqData, 6)));
+            $delpos  = strpos($reqData, ':');
+            $user    = substr($reqData, 0, (int) $delpos);
+            $pswd    = substr($reqData, $delpos + 1);
         } else {
-            $reqData = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['AUTHORIZATION'] ?? '');
-            if (strtolower(substr($reqData, 0, 6)) === 'basic ') {
-                $reqData = base64_decode(trim(substr($reqData, 6)));
-                $delpos  = strpos($reqData, ':');
-                $user    = substr($reqData, 0, (int) $delpos);
-                $pswd    = substr($reqData, $delpos + 1);
-            }
-        }
-
-        if ($user === null) {
             return false;
         }
+
         try {
             $data = $db->getUser($user);
             $hash = $data->pswd ?? '';
@@ -73,18 +69,31 @@ class HttpBasic implements AuthMethodInterface {
                 $this->user = $user;
                 return true;
             }
-            return false;
         } catch (UserUnknownException $ex) {
-            return false;
+            
         }
-    }
-
-    public function advertise(bool $onFailure): bool {
-        if (!isset($_SERVER['PHP_AUTH_USER']) && !isset($_SERVER['HTTP_AUTHORIZATION']) && !isset($_SERVER['AUTHORIZATION']) || $onFailure) {
-            header('WWW-Authenticate: Basic realm="' . $this->realm . '"');
-            return true;
+        if ($strict) {
+            throw new UnauthorizedException();
         }
         return false;
+    }
+
+    public function advertise(bool $onFailure): Response | null {
+        if (!isset($_SERVER['PHP_AUTH_USER']) && !isset($_SERVER['HTTP_AUTHORIZATION']) && !isset($_SERVER['AUTHORIZATION']) || $onFailure) {
+            return new Response(401, ['www-authenticate' => 'Basic realm="' . $this->realm . '"']);
+        }
+        return null;
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        if (!isset($_SERVER['PHP_AUTH_USER']) && !isset($_SERVER['HTTP_AUTHORIZATION']) && !isset($_SERVER['AUTHORIZATION'])) {
+            return null;
+        }
+        $headers = ['www-authenticate' => 'Basic realm="' . $this->realm . '"'];
+        if (!empty($redirectUrl)) {
+            $headers['refresh'] = '0: url=' . $redirectUrl;
+        }
+        return new Response(401, $headers);
     }
 
     public function getUserData(): stdClass {
@@ -94,5 +103,4 @@ class HttpBasic implements AuthMethodInterface {
     public function getUserName(): string {
         return $this->user;
     }
-
 }

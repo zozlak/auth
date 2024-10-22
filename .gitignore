@@ -3,3 +3,5 @@
 /nbproject
 /vendor
 /index.php
+/.phpunit.cache
+/build

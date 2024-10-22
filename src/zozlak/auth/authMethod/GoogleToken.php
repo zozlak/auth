@@ -27,11 +27,12 @@
 namespace zozlak\auth\authMethod;
 
 use BadMethodCallException;
-use stdClass;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Exception\RequestException;
 use zozlak\auth\usersDb\UsersDbInterface;
+use zozlak\auth\UnauthorizedException;
 
 /**
  * Simple Google access_token-based authentication provider.
@@ -66,7 +67,7 @@ class GoogleToken implements AuthMethodInterface {
         $this->usernameField = $usernameField;
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
         $client = new Client();
         $req    = new Request('GET', self::API_URL . '?access_token=' . $this->token);
         try {
@@ -79,8 +80,16 @@ class GoogleToken implements AuthMethodInterface {
             $this->data = $data;
             return true;
         } catch (RequestException $ex) {
-            return false;
+            
         }
+        if ($strict) {
+            throw new UnauthorizedException();
+        }
+        return false;
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        throw new BadMethodCallException('logout not supported');
     }
 
     public function getUserData(): object {
@@ -92,8 +101,7 @@ class GoogleToken implements AuthMethodInterface {
         return $this->data->$field;
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): Response | null {
         throw new BadMethodCallException('advertising not supported');
     }
-
 }

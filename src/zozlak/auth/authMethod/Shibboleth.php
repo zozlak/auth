@@ -26,6 +26,8 @@
 
 namespace zozlak\auth\authMethod;
 
+use BadMethodCallException;
+use GuzzleHttp\Psr7\Response;
 use zozlak\auth\usersDb\UsersDbInterface;
 
 /**
@@ -69,8 +71,12 @@ class Shibboleth extends TrustedHeader {
         }
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
-        return parent::authenticate($db);
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
+        return parent::authenticate($db, $strict);
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        throw new BadMethodCallException('logout not supported');
     }
 
     /**
@@ -81,22 +87,22 @@ class Shibboleth extends TrustedHeader {
      * @return string
      */
     private function getRequestUrl(): string {
-        $ssl      = filter_input(\INPUT_SERVER, 'HTTPS') === 'on';
-        $sp       = strtolower(filter_input(\INPUT_SERVER, 'SERVER_PROTOCOL'));
+        $ssl      = ($_SERVER['HTTPS'] ?? '') === 'on';
+        $sp       = strtolower($_SERVER['SERVER_PROTOCOL'] ?? '');
         $protocol = substr($sp, 0, (int) strpos($sp, '/')) . (($ssl) ? 's' : '' );
 
-        $port = filter_input(\INPUT_SERVER, 'SERVER_PORT');
+        $port = $_SERVER['SERVER_PORT'] ?? '';
         $port = ((!$ssl && $port === '80') || ($ssl && $port === '443')) ? '' : ':' . $port;
 
-        $xhost = trim(explode(',', (string) filter_input(\INPUT_SERVER, 'HTTP_X_FORWARDED_HOST'))[0]);
-        $host  = filter_input(\INPUT_SERVER, 'HTTP_HOST');
-        $sn    = filter_input(\INPUT_SERVER, 'SERVER_NAME');
+        $xhost = trim(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST'])[0]);
+        $host  = $_SERVER['HTTP_HOST'] ?? null;
+        $sn    = $_SERVER['SERVER_NAME'] ?? '';
         $host  = (string) (!empty($xhost) ? $xhost : ($host ?? $sn));
 
-        return $protocol . '://' . $host . $port . filter_input(\INPUT_SERVER, 'REQUEST_URI');
+        return $protocol . '://' . $host . $port . ($_SERVER['REQUEST_URI'] ?? '');
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): Response | null {
         $cookie = false;
         foreach (array_keys($_COOKIE) as $i) {
             if (substr($i, 0, 13) === '_shibsession_') {
@@ -105,8 +111,8 @@ class Shibboleth extends TrustedHeader {
             }
         }
         if (!$cookie || $onFailure) {
-            header('Location: ' . $this->authUrl);
-            return true;
-        }return false;
+            return new Response(302, ['Location' => $this->authUrl]);
+        }
+        return null;
     }
 }

@@ -28,6 +28,7 @@ namespace zozlak\auth\authMethod;
 
 use BadMethodCallException;
 use stdClass;
+use Psr\Http\Message\ResponseInterface;
 use zozlak\auth\usersDb\UsersDbInterface;
 
 /**
@@ -39,6 +40,7 @@ class TrustedHeader implements AuthMethodInterface {
 
     private string $userHeader;
     private string $headersPrefix;
+
     /**
      * 
      * @var array<string>
@@ -56,8 +58,7 @@ class TrustedHeader implements AuthMethodInterface {
      * @param array<string> $headersList explicit list of HTTP header names storing user
      *   data
      */
-    public function __construct(string $userHeader,
-                                string $headersPrefix = '',
+    public function __construct(string $userHeader, string $headersPrefix = '',
                                 array $headersList = []) {
         $this->userHeader    = $userHeader;
         $this->headersPrefix = $headersPrefix;
@@ -65,8 +66,8 @@ class TrustedHeader implements AuthMethodInterface {
         $this->data          = new stdClass();
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
-        $user = filter_input(\INPUT_SERVER, $this->userHeader);
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
+        $user = $_SERVER[$this->userHeader] ?? null;
         if ($user === null || $user === '(null)') {
             return false;
         }
@@ -74,7 +75,7 @@ class TrustedHeader implements AuthMethodInterface {
 
         $data = [];
         foreach ($this->headersList as $i) {
-            $data[$i] = filter_input(\INPUT_SERVER, $i);
+            $data[$i] = $_SERVER[$i] ?? null;
         }
         foreach ($_SERVER as $h => $i) {
             if (substr($h, 0, strlen($this->headersPrefix)) === $this->headersPrefix) {
@@ -86,6 +87,10 @@ class TrustedHeader implements AuthMethodInterface {
         return true;
     }
 
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): ResponseInterface | null {
+        throw new BadMethodCallException('logout not supported');
+    }
+
     public function getUserData(): object {
         return $this->data;
     }
@@ -94,8 +99,7 @@ class TrustedHeader implements AuthMethodInterface {
         return $this->user;
     }
 
-    public function advertise(bool $onFailure): bool {
-        return false;
+    public function advertise(bool $onFailure): ResponseInterface | null {
+        throw new BadMethodCallException('advertising not supported');
     }
-
 }

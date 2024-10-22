@@ -28,8 +28,10 @@ namespace zozlak\auth\authMethod;
 
 use BadMethodCallException;
 use stdClass;
+use GuzzleHttp\Psr7\Response;
 use zozlak\auth\usersDb\UsersDbInterface;
 use zozlak\auth\usersDb\UserUnknownException;
+use zozlak\auth\UnauthorizedException;
 
 /**
  * Auth based on automatically expiring random tokens.
@@ -74,20 +76,24 @@ class Token implements AuthMethodInterface {
         $this->expTime = $expirationTime;
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
         $user = $this->getUserName();
         try {
             $data = $db->getUser($user);
         } catch (UserUnknownException $ex) {
+            if ($strict) {
+                throw new UnauthorizedException();
+            }
             return false;
         }
 
         $passed      = false;
         $validTokens = [];
+        $time        = time();
         foreach ($data->tokens ?? [] as $i) {
-            if ($i->expires >= time()) {
+            if ($i->expires >= $time) {
                 if ($i->token === $this->token) {
-                    $i->expires = time() + $this->expTime;
+                    $i->expires = $time + $this->expTime;
                     $passed     = true;
                 }
                 $validTokens[] = $i;
@@ -99,8 +105,28 @@ class Token implements AuthMethodInterface {
 
         if ($passed) {
             $this->data = $data;
+        } elseif ($strict) {
+            throw new UnauthorizedException();
         }
         return $passed;
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        $user = $this->getUserName();
+        try {
+            $data = $db->getUser($user);
+            for ($i = 0; $i < count($data->tokens ?? []); $i++) {
+                if ($data->tokens[$i]->token === $this->token) {
+                    unset($data->tokens[$i]);
+                    $db->putUser($user, $data);
+                    $resp = !empty($redirectUrl) ? new Response(302, ['Location' => $redirectUrl]) : new Response(201);
+                    return $resp;
+                }
+            }
+        } catch (UserUnknownException $ex) {
+            
+        }
+        return null;
     }
 
     public function getUserData(): object {
@@ -112,7 +138,7 @@ class Token implements AuthMethodInterface {
         return array_shift($token);
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): Response | null {
         throw new BadMethodCallException('advertising not supported');
     }
 }

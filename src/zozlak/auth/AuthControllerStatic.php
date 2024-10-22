@@ -27,6 +27,7 @@
 namespace zozlak\auth;
 
 use stdClass;
+use Psr\Http\Message\ResponseInterface;
 use zozlak\auth\authMethod\AuthMethodInterface;
 use zozlak\auth\usersDb\UsersDbInterface;
 
@@ -52,12 +53,16 @@ class AuthControllerStatic {
         return self::$auth->addMethod($method, $advertise);
     }
 
-    static public function authenticate(): bool {
-        return self::$auth->authenticate();
+    static public function authenticate(bool $strict): bool {
+        return self::$auth->authenticate($strict);
     }
 
-    static public function advertise(): bool {
+    static public function advertise(): ResponseInterface | null {
         return self::$auth->advertise();
+    }
+
+    public function logout(string $redirectUrl = ''): ResponseInterface | null {
+        return self::$auth->logout($redirectUrl);
     }
 
     static public function getUserName(): string {
@@ -71,5 +76,5 @@ class AuthControllerStatic {
     static public function putUserData(stdClass $data, bool $merge = true): bool {
         return self::$auth->putUserData($data, $merge);
     }
-
+    
 }

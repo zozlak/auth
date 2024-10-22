@@ -1,0 +1,37 @@
+name: phpunit
+
+on: push
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # the actual arche-core is run inside the docker container
+        # using the PHP version as provided by the build/docker/Dockerfile
+        php: [8.0, 8.1, 8.2, 8.3, 8.4]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        coverage: xdebug
+      env:
+        fail-fast: true
+    - name: composer
+      run: |
+        composer update
+    - name: phpstan
+      run: |
+        vendor/bin/phpstan analyze -l 6 src
+    - name: phpunit
+      run: |
+        XDEBUG_MODE=coverage vendor/bin/phpunit
+    - name: coveralls
+      run: |
+        export COVERALLS_RUN_LOCALLY=1
+        export COVERALLS_REPO_TOKEN=${{ secrets.coverallsToken }}
+        rm -fR composer.json composer.lock vendor
+        composer require php-coveralls/php-coveralls
+        vendor/bin/php-coveralls -v
+   

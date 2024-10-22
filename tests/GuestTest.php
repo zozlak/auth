@@ -3,7 +3,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 zozlak.
+ * Copyright 2024 zozlak.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,29 +24,31 @@
  * THE SOFTWARE.
  */
 
-namespace zozlak\auth\authMethod;
+namespace zozlak\auth;
 
-use Psr\Http\Message\ResponseInterface;
-use zozlak\auth\usersDb\UsersDbInterface;
+use zozlak\auth\authMethod\Guest;
 
 /**
+ * Description of GuestTest
  *
  * @author zozlak
  */
-interface AuthMethodInterface {
+class GuestTest extends AuthMethodTestBase {
 
-    /**
-     * @param bool $strict should a \zozlak\auth\UnauthorizedExecption be thrown
-     *   if request data contain wrong credentials for this method
-     * @throws \zozlak\auth\UnauthorizedException
-     */
-    public function authenticate(UsersDbInterface $db, bool $strict): bool;
+    const DATA = ['foo' => 'bar'];
 
-    public function logout(UsersDbInterface $db, string $redirectUrl = ''): ResponseInterface | null;
+    public function setUp(): void {
+        parent::setUp();
+        $this->auth = new Guest(self::VALID_USER, (object) self::DATA);
+    }
 
-    public function getUserName(): string;
+    public function testAuthenticate(): void {
+        $this->assertTrue($this->auth->authenticate($this->usersDb, false));
+        $this->assertTrue($this->auth->authenticate($this->usersDb, true));
+    }
 
-    public function getUserData(): object;
-
-    public function advertise(bool $onFailure): ResponseInterface | null;
+    public function testGetUserData(): void {
+        $this->assertEquals(self::VALID_USER, $this->auth->getUserName());
+        $this->assertEquals((object) self::DATA, $this->auth->getUserData());
+    }
 }

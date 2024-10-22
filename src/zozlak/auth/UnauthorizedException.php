@@ -27,6 +27,7 @@
 namespace zozlak\auth;
 
 use Exception;
+use Throwable;
 
 /**
  * Description of UnauthorizeException
@@ -34,5 +35,10 @@ use Exception;
  * @author zozlak
  */
 class UnauthorizedException extends Exception {
-    
+
+    public function __construct(string $message = "Unauthorized",
+                                int $code = 401,
+                                Throwable | null $previous = null) {
+        parent::__construct($message, $code, $previous);
+    }
 }

@@ -10,6 +10,7 @@ namespace zozlak\auth\authMethod;
 
 use BadMethodCallException;
 use stdClass;
+use Psr\Http\Message\ResponseInterface;
 use zozlak\auth\usersDb\UsersDbInterface;
 
 /**
@@ -22,12 +23,12 @@ class Guest implements AuthMethodInterface {
     private string $user;
     private object $data;
 
-    public function __construct(string $user, stdClass $data = null) {
+    public function __construct(string $user, object | null $data = null) {
         $this->user = $user;
         $this->data = $data ?? new stdClass();
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
         return true;
     }
 
@@ -39,8 +40,11 @@ class Guest implements AuthMethodInterface {
         return $this->user;
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): ResponseInterface | null {
         throw new BadMethodCallException('advertising not supported');
     }
 
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): ResponseInterface | null {
+        throw new BadMethodCallException('logout not supported');
+    }
 }

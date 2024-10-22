@@ -1,5 +1,10 @@
 # Auth
 
+[![Latest Stable Version](https://poser.pugx.org/zozlak/auth/v/stable)](https://packagist.org/packages/zozlak/auth)
+![Build status](https://github.com/acdh-oeaw/arche-core/workflows/phpunit/badge.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/zozlak/auth/badge.svg?branch=master)](https://coveralls.io/github/zozlak/auth?branch=master)
+[![License](https://poser.pugx.org/zozlak/auth/license)](https://packagist.org/packages/zozlak/auth)
+
 A simple yet flexible library for authenticating against different providers.
 
 Currently supported authorization providers:
@@ -103,9 +108,9 @@ Remember `Guest`, `GoogleToken` and `TrustedHeaders` don't support advertisment.
 
 ### HTTP Digest method
 
-HTTP Digest is difficult to combine with any other auth method. Unlike any other method HTTP Digest
+HTTP Digest is difficult to combine with any other auth method. Unlike other methods the HTTP Digest
 has to be advertised to the client before his request so he can prepare valid credentials. And once it is advertised
-all GUI clients (most notably web browsers) will keep asking user for a login and password until valid once are provided making it impossible to use any other authentication method.
+all GUI clients (most notably web browsers) will keep asking user for a login and password until valid ones are provided making it impossible to use any other authentication method.
 
 (Poor) workarounds for this problem are:
 

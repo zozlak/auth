@@ -28,6 +28,7 @@ namespace zozlak\auth;
 
 use BadMethodCallException;
 use stdClass;
+use Psr\Http\Message\ResponseInterface;
 use zozlak\auth\authMethod\AuthMethodInterface;
 use zozlak\auth\usersDb\UsersDbInterface;
 
@@ -47,7 +48,8 @@ class AuthController {
      * 
      * @var array<AuthMethodInterface>
      */
-    private array $authChain     = [];
+    private array $authChain = [];
+
     /**
      * 
      * @var array<int>
@@ -75,34 +77,59 @@ class AuthController {
         return $this;
     }
 
-    public function authenticate(): bool {
+    public function authenticate(bool $strict): bool {
         $this->valid = -1;
-        foreach ($this->authChain as $i => $authMethod) {
-            /* @var $authMethod \zozlak\auth\authMethod\AuthMethodInterface */
-            if ($authMethod->authenticate($this->usersDb)) {
-                $this->valid = $i;
-                $this->usersDb->putUser($authMethod->getUserName(), $authMethod->getUserData());
-                return true;
+        try {
+            foreach ($this->authChain as $i => $authMethod) {
+                /* @var $authMethod \zozlak\auth\authMethod\AuthMethodInterface */
+                $resp = $authMethod->authenticate($this->usersDb, $strict);
+                if ($resp !== false) {
+                    $this->valid = $i;
+                    $this->usersDb->putUser($authMethod->getUserName(), $authMethod->getUserData());
+                    return true;
+                }
             }
+        } catch (UnauthorizedException) {
+            
         }
         return false;
     }
 
-    public function advertise(): bool {
+    public function advertise(): ResponseInterface | null {
         foreach ($this->authChain as $i => $authMethod) {
             if ($this->authAdvertise[$i] >= self::ADVERTISE_ONCE) {
-                $adv = $authMethod->advertise($this->authAdvertise[$i] === self::ADVERTISE_ALWAYS);
-                if ($adv) {
-                    return true;
+                try {
+                    $resp = $authMethod->advertise($this->authAdvertise[$i] === self::ADVERTISE_ALWAYS);
+                    if ($resp) {
+                        return $resp;
+                    }
+                } catch (BadMethodCallException) {
+                    
                 }
             }
         }
-        return false;
+        return null;
+    }
+
+    public function logout(string $redirectUrl = ''): ResponseInterface | null {
+        foreach ($this->authChain as $i => $authMethod) {
+            /* @var $authMethod \zozlak\auth\authMethod\AuthMethodInterface */
+            try {
+                $resp = $authMethod->logout($this->usersDb, $redirectUrl);
+                if ($resp !== null) {
+                    $this->valid = -1;
+                    return $resp;
+                }
+            } catch (BadMethodCallException) {
+                
+            }
+        }
+        return null;
     }
 
     public function getUserName(): string {
         if ($this->valid < 0) {
-            throw new UnauthorizedException('Unauthorized', 401);
+            throw new UnauthorizedException();
         }
         return $this->authChain[$this->valid]->getUserName();
     }

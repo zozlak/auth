@@ -27,8 +27,10 @@
 namespace zozlak\auth\authMethod;
 
 use stdClass;
+use GuzzleHttp\Psr7\Response;
 use zozlak\auth\usersDb\UsersDbInterface;
 use zozlak\auth\usersDb\UserUnknownException;
+use zozlak\auth\UnauthorizedException;
 
 /**
  * Description of HttpDigest
@@ -52,7 +54,7 @@ class HttpDigest implements AuthMethodInterface {
         $this->realm = $realm;
     }
 
-    public function authenticate(UsersDbInterface $db): bool {
+    public function authenticate(UsersDbInterface $db, bool $strict): bool {
         $reqData = $this->getRequestData();
         if ($reqData === null) {
             return false;
@@ -62,17 +64,31 @@ class HttpDigest implements AuthMethodInterface {
             if (strlen($data->ha1 ?? '') === 0) {
                 return false;
             }
-            $ha2       = md5(filter_input(\INPUT_SERVER, 'REQUEST_METHOD') . ':' . $reqData['uri']);
+            $ha2       = md5(($_SERVER['REQUEST_METHOD'] ?? '') . ':' . $reqData['uri']);
             $nonce     = $reqData['nonce'] . ':' . $reqData['nc'] . ':' . $reqData['cnonce'] . ':' . $reqData['qop'];
             $validResp = md5($data->ha1 . ':' . $nonce . ':' . $ha2);
             if ($reqData['response'] === $validResp) {
                 $this->user = $reqData['username'];
                 return true;
             }
-            return false;
         } catch (UserUnknownException $ex) {
-            return false;
+            
         }
+        if ($strict) {
+            throw new UnauthorizedException();
+        }
+        return false;
+    }
+
+    public function logout(UsersDbInterface $db, string $redirectUrl = ''): Response | null {
+        if (!isset($_SERVER['PHP_AUTH_DIGEST'])) {
+            return null;
+        }
+        $headers = [];
+        if (!empty($redirectUrl)) {
+            $headers['Refresh'] = '0: url=' . $redirectUrl;
+        }
+        return new Response(401, $headers);
     }
 
     public function getUserData(): object {
@@ -83,12 +99,13 @@ class HttpDigest implements AuthMethodInterface {
         return $this->user;
     }
 
-    public function advertise(bool $onFailure): bool {
+    public function advertise(bool $onFailure): Response | null {
         if ($this->getRequestData() === null || $onFailure) {
-            header('WWW-Authenticate: Digest realm="' . $this->realm . '",qop="auth",nonce="' . uniqid() . '",opaque="' . md5($this->realm) . '"');
-            return true;
+            $headers                     = [];
+            $headers['WWW-Authenticate'] = 'Digest realm="' . $this->realm . '",qop="auth",nonce="' . bin2hex(random_bytes(16)) . '",opaque="' . md5($this->realm) . '"';
+            return new Response(401, $headers);
         }
-        return false;
+        return null;
     }
 
     /**
@@ -108,16 +125,26 @@ class HttpDigest implements AuthMethodInterface {
         ];
         $keys  = implode('|', array_keys($parts));
 
-        $raw     = $_SERVER['PHP_AUTH_DIGEST'] ?? '';
-        $matches = null;
-        preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $raw, $matches, PREG_SET_ORDER);
+        $raw = $this->getDigestHeader();
+        if (!empty($raw)) {
+            $matches = null;
+            preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $raw, $matches, PREG_SET_ORDER);
+        }
 
         $data = [];
-        foreach ($matches as $m) {
+        foreach ($matches ?? [] as $m) {
             $data[$m[1]] = $m[3] ? $m[3] : $m[4];
             unset($parts[$m[1]]);
         }
 
         return count($parts) > 0 ? null : $data;
+    }
+
+    private function getDigestHeader(): string {
+        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['AUTHORIZATION'] ?? '');
+        if (strtolower(substr($header, 0, 8)) === 'digest ') {
+            return substr($header, 8);
+        }
+        return '';
     }
 }

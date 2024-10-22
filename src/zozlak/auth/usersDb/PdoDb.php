@@ -78,7 +78,7 @@ class PdoDb implements UsersDbInterface {
         return json_decode((string) $data) ?? new stdClass();
     }
 
-    public function putUser(string $user, object $data = null,
+    public function putUser(string $user, object | null $data = null,
                             bool $merge = true): bool {
         $data = $data ?? new stdClass();
 
@@ -102,5 +102,4 @@ class PdoDb implements UsersDbInterface {
 
         return $update;
     }
-
 }

@@ -114,7 +114,7 @@ class Google implements AuthMethodInterface {
      *   https://console.developers.google.com/apis/credentials (as array, 
      *   object or JSON file path; if array or object, must contain 'client_id' 
      *   and 'client_secret')
-     * @param array<mixed> $authConfig configuration of an authorization request made
+     * @param array<mixed>|null $authConfig configuration of an authorization request made
      *   when token is invalid or missing - see the AUTH_CONFIG constant;
      *   if NULL, no redirection to the Google auth service is made when 
      *   a token is missing or invalid
@@ -122,7 +122,7 @@ class Google implements AuthMethodInterface {
      *   according to the chosen scope
      */
     public function __construct(string $token, $appConfig,
-                                array $authConfig = null,
+                                array | null $authConfig = null,
                                 string $usernameField = 'email') {
         $this->client        = new Client();
         $this->usernameField = $usernameField;

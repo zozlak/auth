@@ -54,14 +54,15 @@ class Shibboleth extends TrustedHeader {
      *   data
      * @param string $authUrl Shibboleth login endpoint URL (typically 
      *   https://domain/Shibboleth.sso/Login)
-     * @param string $target URL user should be redirected to after successful
+     * @param string|null $target URL user should be redirected to after successful
      *   login (if not specified current request URL is assumed)
-     * @param string $entityId optional Service Provider's entity ID (if not
+     * @param string|null $entityId optional Service Provider's entity ID (if not
      *   specified Shibboleth's login endpoint default will be used)
      */
     public function __construct(string $userHeader, string $headersPrefix,
                                 array $headersList, string $authUrl,
-                                string $target = null, string $entityId = null) {
+                                string | null $target = null,
+                                string | null $entityId = null) {
         parent::__construct($userHeader, $headersPrefix, $headersList);
 
         $target        = $target ?? $this->getRequestUrl();

@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * The MIT License
  *
  * Copyright 2018 zozlak.
@@ -38,6 +38,6 @@ interface UsersDbInterface {
 
     public function deleteUser(string $user): bool;
 
-    public function putUser(string $user, object $data = null,
+    public function putUser(string $user, object | null $data = null,
                             bool $merge = true): bool;
 }

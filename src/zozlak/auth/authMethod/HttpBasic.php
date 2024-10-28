@@ -91,7 +91,7 @@ class HttpBasic implements AuthMethodInterface {
         }
         $headers = ['www-authenticate' => 'Basic realm="' . $this->realm . '"'];
         if (!empty($redirectUrl)) {
-            $headers['refresh'] = '0: url=' . $redirectUrl;
+            $headers['refresh'] = '0; url=' . $redirectUrl;
         }
         return new Response(401, $headers);
     }

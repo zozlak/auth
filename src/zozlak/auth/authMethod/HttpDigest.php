@@ -86,7 +86,7 @@ class HttpDigest implements AuthMethodInterface {
         }
         $headers = [];
         if (!empty($redirectUrl)) {
-            $headers['Refresh'] = '0: url=' . $redirectUrl;
+            $headers['Refresh'] = '0; url=' . $redirectUrl;
         }
         return new Response(401, $headers);
     }

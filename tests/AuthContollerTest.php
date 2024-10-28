@@ -119,7 +119,7 @@ class AuthContollerTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(401, $resp->getStatusCode());
         $this->assertCount(2, $resp->getHeaders());
         $this->assertEquals(['Basic realm="realm"'], $resp->getHeader('www-authenticate'));
-        $this->assertEquals(['0: url=redirectUrl'], $resp->getHeader('refresh'));
+        $this->assertEquals(['0; url=redirectUrl'], $resp->getHeader('refresh'));
     }
 
     public function testUserData(): void {

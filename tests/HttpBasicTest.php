@@ -93,7 +93,7 @@ class HttpBasicTest extends AuthMethodTestBase {
 
         $headers = [
             'www-authenticate' => 'Basic realm="' . self::REALM . '"',
-            'refresh'          => '0: url=redirectUrl',
+            'refresh'          => '0; url=redirectUrl',
         ];
         $resp    = $this->auth->logout($this->usersDb, 'redirectUrl');
         $this->assertEquals(401, $resp->getStatusCode());

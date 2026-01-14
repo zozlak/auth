@@ -46,15 +46,20 @@ class PdoDb implements UsersDbInterface {
     private string $userCol;
     private string $dataCol;
 
-    public function __construct(string $connString, string $tableName = 'users',
+    public function __construct(string | PDO $connString,
+                                string $tableName = 'users',
                                 string $userCol = 'user',
                                 string $dataCol = 'data') {
         $this->tableName = $tableName;
         $this->userCol   = $userCol;
         $this->dataCol   = $dataCol;
 
-        $this->pdo = new PDO($connString);
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        if ($connString instanceof PDO) {
+            $this->pdo = $connString;
+        } else {
+            $this->pdo = new PDO($connString);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        }
         try {
             $this->pdo->query("SELECT 1 FROM $this->tableName");
         } catch (PDOException $ex) {
